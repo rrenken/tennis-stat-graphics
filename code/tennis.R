@@ -27,7 +27,7 @@ dim(data)
 tennis <- data
 
 # make surface factor
-tennis$Surface <- factor(tennis$Surface, levels = c("Clay", "Grass", "Hard"))\
+tennis$Surface <- factor(tennis$Surface, levels = c("Clay", "Grass", "Hard"))
 
 # drop column with player names
 tennis <- tennis[, -1]
@@ -76,6 +76,8 @@ ggpairs(tennis,
 # --------------------------------------------------
 
 
+########## Return Points Won % ##########
+
 # Fit linear regression model
 model <- lm(winpercent ~ returnpercent, data = tennis)
 fitted <- predict(model)
@@ -101,3 +103,35 @@ qqPlot(model, main = "QQ Plot")
 
 # shapiro wilks test
 shapiro.test(residuals)
+
+
+
+
+########## Double Fault % ##########
+
+# Fit linear regression model
+model_fault <- lm(winpercent ~ doublefaultpercent, data = tennis)
+fitted_fault <- predict(model_fault)
+residuals_fault <- residuals(model_fault)
+
+# plot the scatter plot with the regression line
+ggplot(tennis, aes(x = doublefaultpercent, y = winpercent)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, color = "blue") +
+  labs(title = "Win % vs. Double Fault %", x = "Double Fault %", y = "Win %")
+
+summary(model_fault)
+
+# Plot residuals vs. fitted values
+ggplot(tennis, aes(x = fitted_fault, y = residuals_fault)) +
+  geom_point() +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+  geom_smooth(method = "loess", se = FALSE, color = "blue") +
+  labs(title = "Residuals vs. Fitted Values", x = "Fitted Values", y = "Residuals")
+
+# QQ plot
+qqPlot(model_fault, main = "QQ Plot")
+
+# shapiro wilks test
+shapiro.test(residuals_fault)
+
