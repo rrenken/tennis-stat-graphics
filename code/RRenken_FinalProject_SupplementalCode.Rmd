@@ -1,29 +1,53 @@
+---
+title: "MATH 6490 Final Project - Supplemental Code"
+author: "Ryan Renken"
+date: "2024-11-27"
+output: html_document
+---
 
-# --------------------------------------------------
-# LOAD NECESSARY PACKAGES
-# --------------------------------------------------
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
 
+
+
+***
+
+<div style="text-align: center;">
+# **Exploring Impactful Variables of Professional Tennis Player Success**
+
+</div>
+
+***
+
+# **Load Necessary Libraries**
+
+```{r}
 library(ggplot2)
 library(ggthemes)
 library(GGally)
 library(car)
+```
 
+***
 
-# --------------------------------------------------
-# READ IN DATA
-# --------------------------------------------------
-getwd()
-data <- read.csv("BGSU - Phd Data Science/2024 Fall/Graphical Statistics/tennis-stat-graphics/data/atp-tennis.csv")
+# **Read In Data**
+
+```{r}
+setwd("C:\\Users\\ryanr\\OneDrive\\Documents\\BGSU - Phd Data Science\\2024 Fall\\Graphical Statistics\\tennis-stat-graphics")
+
+data <- read.csv("data/atp-tennis.csv")
 
 #View(data)
 str(data)
 dim(data)
+```
 
+***
 
+# **Clean Data**
 
-# --------------------------------------------------
-# CLEAN DATA
-# --------------------------------------------------
+```{r, fig.align='center',fig.width=8,fig.height=5}
 
 tennis <- data
 
@@ -38,13 +62,13 @@ colnames(tennis) <- c("surface", "returnpercent", "doublefaultpercent", "winperc
 
 #View(tennis)
 str(tennis)
+```
 
+***
 
+# **Exploratory Data Analysis**
 
-# --------------------------------------------------
-# EDA
-# --------------------------------------------------
-
+```{r,  fig.align='center',fig.width=8,fig.height=5}
 
 # Summary statistics
 summary(tennis)
@@ -57,6 +81,7 @@ ggplot(tennis, aes(x = surface, fill = surface)) +
   geom_bar() +
   labs(title = "Number of Records on Each Surface", x = "Surface", y = "Count")
 
+
 # Plot side by side boxplots of match wins by surface
 ggplot(tennis, aes(x = surface, y = winpercent, fill = surface)) +
   theme_base() + theme(plot.background=element_rect(fill="#F0F0F0", colour = "white", 
@@ -64,8 +89,9 @@ ggplot(tennis, aes(x = surface, y = winpercent, fill = surface)) +
                        legend.position = "none") +
   geom_boxplot() +
   labs(title = "Win % by Surface", x = "Surface", y = "Win %")
+```
 
-
+```{r,  fig.align='center',fig.width=12,fig.height=8}
 # Pairs plot
 ggpairs(tennis, 
         aes(colour = surface),
@@ -81,14 +107,13 @@ ggpairs(tennis,
   ) +
         scale_color_manual(values = c("red", "darkgreen", "dodgerblue")) +
         scale_fill_manual(values = c("red", "darkgreen", "dodgerblue"))
+```
 
+***
 
-# --------------------------------------------------
-# LINEAR REGRESSION MODELING
-# --------------------------------------------------
+# **Simple Linear Regression - *Return Points Won %* **
 
-
-########## Return Points Won % ##########
+```{r,  fig.align='center',fig.width=8,fig.height=5}
 
 # Fit linear regression model
 model <- lm(winpercent ~ returnpercent, data = tennis)
@@ -118,13 +143,16 @@ ggplot(tennis, aes(x = fitted, y = residuals)) +
 qqPlot(model, main = "QQ Plot", envelope = FALSE)
 
 
+
 # shapiro wilks test
 shapiro.test(residuals)
+```
 
+***
 
+# **Simple Linear Regression - *Double Fault %* **
 
-
-########## Double Fault % ##########
+```{r,  fig.align='center',fig.width=8,fig.height=5}
 
 # Fit linear regression model
 model_fault <- lm(winpercent ~ doublefaultpercent, data = tennis)
@@ -153,14 +181,15 @@ ggplot(tennis, aes(x = fitted_fault, y = residuals_fault)) +
 # QQ plot
 qqPlot(model_fault, main = "QQ Plot", envelope = FALSE)
 
-
 # shapiro wilks test
 shapiro.test(residuals_fault)
+```
 
+***
 
+# **Multiple Linear Regression - *Full Model* **
 
-
-
+```{r,  fig.align='center',fig.width=8,fig.height=5}
 ########## Full model ##########
 str(tennis)
 # Fit linear regression model
@@ -208,11 +237,14 @@ influencePlot(model_full,
               ylim=c(-5,5),
               id=FALSE)
 title("Influence Plot with Cook's Distance", outer = TRUE)
+```
 
+***
 
+# **Multiple Linear Regression - *With Interaction Terms* **
 
-########## Full model w/ interaction ##########
-str(tennis)
+```{r,  fig.align='center',fig.width=8,fig.height=5}
+
 # Fit linear regression model
 model_full_inter <- lm(winpercent ~ returnpercent + surface + doublefaultpercent + 
                          returnpercent:surface + 
@@ -225,43 +257,6 @@ residuals_full_inter <- residuals(model_full_inter)
 
 summary(model_full_inter)
 
-# Plot residuals vs. fitted values
-ggplot(tennis, aes(x = fitted_full_inter, y = residuals_full_inter)) +
-  theme_base() + theme(plot.background=element_rect(fill="#F0F0F0", colour = "white", 
-                                                    linetype="solid")) +
-  geom_point() +
-  geom_hline(yintercept = 0, linetype = "dashed", color = "red", linewidth = 2, alpha = 0.75) +
-  geom_smooth(method = "loess", se = FALSE, color = "blue", linewidth = 2) +
-  labs(title = "Residuals vs. Fitted Values", x = "Fitted Values", y = "Residuals")
+```
 
-# QQ plot
-qqPlot(model_full_inter, main = "QQ Plot", envelope = FALSE)
-
-# shapiro wilks test
-shapiro.test(residuals_full_inter)
-
-
-library(car)
-vif(model_full_inter)
-
-
-# Cook's Dist
-
-cooks<-cooks.distance(model_full_inter)
-cooksf<-pf(cooks,2,203)
-
-plot(tennis$winpercent,cooksf,xlim=c(0,1),
-     ylim=c(0.0,.05),cex=2,
-     xlab="Urea",
-     ylab="F-Dist'n Percentile of Cook's Distance",
-     main = "Cook's Distance Plot")
-
-
-# Influence Plots
-
-influencePlot(model_full_inter,
-              xlim=c(0,0.04),
-              ylim=c(-5,5),
-              id=FALSE)
-title("Influence Plot with Cook's Distance", outer = TRUE)
-
+***
